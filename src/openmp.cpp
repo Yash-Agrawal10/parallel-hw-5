@@ -1,8 +1,9 @@
+#include <omp.h>
+
 #include <chrono>
 #include <cmath>
 #include <iostream>
 #include <numbers>
-#include <omp.h>
 #include <string>
 #include <vector>
 
