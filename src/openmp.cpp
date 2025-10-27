@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     const double start = 0.0;
     const double end = 1.0;
     const double h = (end - start) / (N - 1);
-    const double tolerance = 1e-6;
+    const double tolerance = 1e-3;
     const int max_iterations = 100000;
 
     // Initialize the grid and new grid
