@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
     const int N = 100; // Number of grid points in each dimension
     const double h = (end - start) / (N - 1);
     const double tolerance = 1e-6;
+    const int max_iterations = 100000;
 
     // Initialize the grid
     std::vector<std::vector<double>> u(N, std::vector<double>(N, 0.0));
@@ -73,6 +74,9 @@ int main(int argc, char* argv[]) {
         // Check for convergence
         if (max_residual < tolerance) {
             break;
+        } else if (iterations >= max_iterations) {
+            std::cout << "Reached maximum iterations without convergence." << std::endl;
+            return 1;
         }
 
         // Optional: Print progress every 100 iterations
