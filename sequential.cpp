@@ -1,10 +1,11 @@
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <numbers>
 #include <vector>
-#include <iostream>
 
 // Convenience constants
+constexpr bool verbose = false;
 constexpr double PI = std::numbers::pi;
 using Clock = std::chrono::high_resolution_clock;
 
@@ -66,6 +67,11 @@ int main() {
         // Check for convergence
         if (max_residual < tolerance) {
             break;
+        }
+
+        // Optional: Print progress every 100 iterations
+        if (verbose && iterations % 100 == 0) {
+            std::cout << "Iteration " << iterations << ", Max Residual: " << max_residual << std::endl;
         }
     }
 
