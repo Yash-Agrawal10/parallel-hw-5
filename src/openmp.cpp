@@ -44,11 +44,18 @@ int main(int argc, char* argv[]) {
     const double end = 1.0;
     const double h = (end - start) / (N - 1);
     const double tolerance = 1e-3;
-    const int max_iterations = 100000;
 
-    // Initialize the grid and new grid
+    // Initialize the grid, new grid, and f values
     std::vector<double> u(N * N, 0.0);
     std::vector<double> u_new(N * N, 0.0);
+    std::vector<double> f_values(N * N, 0.0);
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            double x = start + j * h;
+            double y = start + i * h;
+            f_values[i * N + j] = f(x, y);
+        }
+    }
 
     // Begin timing
     auto start_time = Clock::now();
@@ -56,23 +63,11 @@ int main(int argc, char* argv[]) {
     // Jacobi iteration
     int iterations = 0;
     while (true) {
-
-        // Initialize new grid
-#pragma omp parallel for
-        for (int i = 0; i < N; ++i) {
-            u_new[i * N + 0] = 0.0;       // Left boundary
-            u_new[i * N + (N - 1)] = 0.0; // Right boundary
-            u_new[0 * N + i] = 0.0;       // Bottom boundary
-            u_new[(N - 1) * N + i] = 0.0; // Top boundary
-        }
-
         // Update internal grid points
 #pragma omp parallel for collapse(2)
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
-                double x = start + j * h;
-                double y = start + i * h;
-                double f_term = f(x, y) * h * h * -1;
+                double f_term = f_values[i * N + j] * h * h * -1;
                 double neighbor_term =
                     u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
                 u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
@@ -87,12 +82,10 @@ int main(int argc, char* argv[]) {
 #pragma omp parallel for collapse(2) reduction(max : max_residual)
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
-                double x = start + j * h;
-                double y = start + i * h;
                 double x_partial = (u[(i - 1) * N + j] - 2 * u[i * N + j] + u[(i + 1) * N + j]) / (h * h);
                 double y_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
                 double gradient = x_partial + y_partial;
-                double residual = std::abs(gradient - f(x, y));
+                double residual = std::abs(gradient - f_values[i * N + j]);
                 max_residual = std::max(max_residual, residual);
             }
         }
@@ -103,13 +96,10 @@ int main(int argc, char* argv[]) {
         // Check for convergence
         if (max_residual < tolerance) {
             break;
-        } else if (iterations >= max_iterations) {
-            std::cout << "Reached maximum iterations without convergence." << std::endl;
-            return 1;
-        }
+        } 
 
         // Optional: Print progress every 100 iterations
-        if (verbose && iterations % 100 == 0) {
+        if (verbose && iterations % 1000 == 0) {
             std::cout << "Iteration " << iterations << ", Max Residual: " << max_residual << std::endl;
         }
     }
