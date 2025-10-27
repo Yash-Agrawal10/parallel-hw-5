@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <omp.h>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,14 @@ using Clock = std::chrono::high_resolution_clock;
 double f(double x, double y) { return -8 * PI * PI * sin(2 * PI * x) * cos(2 * PI * y); }
 
 int main(int argc, char* argv[]) {
+    // Verify OpenMP is available
+#ifdef _OPENMP
+    std::cout << "OpenMP is enabled with " << omp_get_max_threads() << " threads." << std::endl;
+#else
+    std::cerr << "Error: OpenMP is not enabled. Please compile with OpenMP support." << std::endl;
+    return 1;
+#endif
+
     // Parse command line arguments for verbosity and grid size
     bool verbose = false;
     int N = 250;
@@ -47,7 +56,9 @@ int main(int argc, char* argv[]) {
     // Jacobi iteration
     int iterations = 0;
     while (true) {
+
         // Initialize new grid
+#pragma omp parallel for
         for (int i = 0; i < N; ++i) {
             u_new[i * N + 0] = 0.0;       // Left boundary
             u_new[i * N + (N - 1)] = 0.0; // Right boundary
@@ -56,12 +67,14 @@ int main(int argc, char* argv[]) {
         }
 
         // Update internal grid points
+#pragma omp parallel for collapse(2)
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
                 double x = start + j * h;
                 double y = start + i * h;
                 double f_term = f(x, y) * h * h * -1;
-                double neighbor_term = u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
+                double neighbor_term =
+                    u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
                 u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
             }
         }
@@ -71,6 +84,7 @@ int main(int argc, char* argv[]) {
 
         // Compute residual
         double max_residual = 0.0;
+#pragma omp parallel for collapse(2) reduction(max : max_residual)
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
                 double x = start + j * h;

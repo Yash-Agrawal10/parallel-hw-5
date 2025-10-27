@@ -11,5 +11,9 @@
   "C_Cpp.default.includePath": [
     "${workspace}/**",
     "/opt/homebrew/opt/llvm/include"
-  ]
+  ],
+  "files.associations": {
+    "string": "cpp",
+    "numbers": "cpp"
+  }
 }
