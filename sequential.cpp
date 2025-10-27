@@ -28,8 +28,9 @@ int main(int argc, char* argv[]) {
     const double tolerance = 1e-6;
     const int max_iterations = 100000;
 
-    // Initialize the grid
+    // Initialize the grid and new grid
     std::vector<std::vector<double>> u(N, std::vector<double>(N, 0.0));
+    std::vector<std::vector<double>> u_new(N, std::vector<double>(N, 0.0));
 
     // Begin timing
     auto start_time = Clock::now();
@@ -38,7 +39,12 @@ int main(int argc, char* argv[]) {
     int iterations = 0;
     while (true) {
         // Initialize new grid
-        std::vector<std::vector<double>> u_new(N, std::vector<double>(N, 0.0));
+        for (int i = 0; i < N; ++i) {
+            u_new[i][0] = 0.0;          // Left boundary
+            u_new[i][N - 1] = 0.0;      // Right boundary
+            u_new[0][i] = 0.0;          // Bottom boundary
+            u_new[N - 1][i] = 0.0;      // Top boundary
+        }
 
         // Update internal grid points
         for (int i = 1; i < N - 1; ++i) {
@@ -52,7 +58,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Swap grids
-        u = std::move(u_new);
+        std::swap(u, u_new);
 
         // Compute residual
         double max_residual = 0.0;
