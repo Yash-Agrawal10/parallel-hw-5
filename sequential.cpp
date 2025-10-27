@@ -5,20 +5,26 @@
 #include <vector>
 
 // Convenience constants
-constexpr bool verbose = false;
 constexpr double PI = std::numbers::pi;
 using Clock = std::chrono::high_resolution_clock;
 
 double f(double x, double y) { return -8 * PI * PI * sin(2 * PI * x) * cos(2 * PI * y); }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Parse command line arguments for verbosity
+    bool verbose = false;
+    if (argc > 1) {
+        std::string arg = argv[1];
+        if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        }
+    }
+
     // Define constants
-    const double x_start = 0;
-    const double x_end = 1;
-    const double y_start = 0;
-    const double y_end = 1;
+    const double start = 0.0;
+    const double end = 1.0;
     const int N = 100; // Number of grid points in each dimension
-    const double h = (x_end - x_start) / (N - 1);
+    const double h = (end - start) / (N - 1);
     const double tolerance = 1e-6;
 
     // Initialize the grid
@@ -36,8 +42,8 @@ int main() {
         // Update internal grid points
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
-                double x = x_start + i * h;
-                double y = y_start + j * h;
+                double x = start + i * h;
+                double y = start + j * h;
                 double f_term = f(x, y) * h * h * -1;
                 double neighbor_term = u[i - 1][j] + u[i + 1][j] + u[i][j - 1] + u[i][j + 1];
                 u_new[i][j] = 0.25 * (neighbor_term + f_term);
@@ -51,8 +57,8 @@ int main() {
         double max_residual = 0.0;
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
-                double x = x_start + i * h;
-                double y = y_start + j * h;
+                double x = start + i * h;
+                double y = start + j * h;
                 double x_partial = (u[i - 1][j] - 2 * u[i][j] + u[i + 1][j]) / (h * h);
                 double y_partial = (u[i][j - 1] - 2 * u[i][j] + u[i][j + 1]) / (h * h);
                 double gradient = x_partial + y_partial;
