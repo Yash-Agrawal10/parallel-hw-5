@@ -1,0 +1,46 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+\pgfplotsset{compat=1.18}
+
+\title{APMA 2822B Homework 3 Report}
+\author{Yash Agrawal}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Math Setup}
+Assume that $\Delta x = \Delta y = h$. 
+
+Using the second derivative approximations we were given, we have
+\[
+    f(x, y) = \frac{u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1] - 4u[i, j]}{h^2}
+\]
+
+Substituting in the given $f(x, y)$, we get
+\begin{align*}
+    -8\pi^2 \sin(2\pi x) \cos(2\pi y) &= \frac{u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1] - 4u[i, j]}{h^2} \\
+    -8\pi^2 h^2 \sin(2\pi x) \cos(2\pi y) &= u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1] - 4u[i, j]
+\end{align*}
+
+Solving for $u[i, j]$, we have
+\begin{align*}
+    4u[i, j] &= u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1] + 8\pi^2 h^2 \sin(2\pi x) \cos(2\pi y) \\
+    u[i, j] &= \frac{1}{4} \left( u[i-1, j] + u[i+1, j] + u[i, j-1] + u[i, j+1] + 8\pi^2 h^2 \sin(2\pi x) \cos(2\pi y) \right)
+\end{align*}
+
+We can use this equation to iteratively solve for $u$ with the given $f(x, y)$ using the Jacobi method. 
+
+We will consider our solution to have converged when the maximum change in $u$ across all grid points is less than a specified tolerance $\epsilon$.
+
+\end{document}
