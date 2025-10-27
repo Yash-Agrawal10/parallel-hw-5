@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
     // Parse command line arguments for verbosity and grid size
     bool verbose = false;
-    int N = 250;
+    int N = 256;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-v" || arg == "--verbose") {
