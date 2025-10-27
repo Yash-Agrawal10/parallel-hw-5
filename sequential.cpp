@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <string>
 #include <vector>
 
 // Convenience constants
@@ -29,8 +30,8 @@ int main(int argc, char* argv[]) {
     const int max_iterations = 100000;
 
     // Initialize the grid and new grid
-    std::vector<std::vector<double>> u(N, std::vector<double>(N, 0.0));
-    std::vector<std::vector<double>> u_new(N, std::vector<double>(N, 0.0));
+    std::vector<double> u(N * N, 0.0);
+    std::vector<double> u_new(N * N, 0.0);
 
     // Begin timing
     auto start_time = Clock::now();
@@ -40,10 +41,10 @@ int main(int argc, char* argv[]) {
     while (true) {
         // Initialize new grid
         for (int i = 0; i < N; ++i) {
-            u_new[i][0] = 0.0;          // Left boundary
-            u_new[i][N - 1] = 0.0;      // Right boundary
-            u_new[0][i] = 0.0;          // Bottom boundary
-            u_new[N - 1][i] = 0.0;      // Top boundary
+            u_new[i * N + 0] = 0.0;       // Left boundary
+            u_new[i * N + (N - 1)] = 0.0; // Right boundary
+            u_new[0 * N + i] = 0.0;       // Bottom boundary
+            u_new[(N - 1) * N + i] = 0.0; // Top boundary
         }
 
         // Update internal grid points
@@ -52,8 +53,8 @@ int main(int argc, char* argv[]) {
                 double x = start + i * h;
                 double y = start + j * h;
                 double f_term = f(x, y) * h * h * -1;
-                double neighbor_term = u[i - 1][j] + u[i + 1][j] + u[i][j - 1] + u[i][j + 1];
-                u_new[i][j] = 0.25 * (neighbor_term + f_term);
+                double neighbor_term = u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
+                u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
             }
         }
 
@@ -66,8 +67,8 @@ int main(int argc, char* argv[]) {
             for (int j = 1; j < N - 1; ++j) {
                 double x = start + i * h;
                 double y = start + j * h;
-                double x_partial = (u[i - 1][j] - 2 * u[i][j] + u[i + 1][j]) / (h * h);
-                double y_partial = (u[i][j - 1] - 2 * u[i][j] + u[i][j + 1]) / (h * h);
+                double x_partial = (u[(i - 1) * N + j] - 2 * u[i * N + j] + u[(i + 1) * N + j]) / (h * h);
+                double y_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
                 double gradient = x_partial + y_partial;
                 double residual = std::abs(gradient - f(x, y));
                 max_residual = std::max(max_residual, residual);
