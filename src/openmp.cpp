@@ -64,8 +64,9 @@ int main(int argc, char* argv[]) {
     int iterations = 0;
     while (true) {
         // Update internal grid points
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for
         for (int i = 1; i < N - 1; ++i) {
+#pragma omp simd
             for (int j = 1; j < N - 1; ++j) {
                 double f_term = f_values[i * N + j] * h * h * -1;
                 double neighbor_term =
@@ -96,7 +97,7 @@ int main(int argc, char* argv[]) {
         // Check for convergence
         if (max_residual < tolerance) {
             break;
-        } 
+        }
 
         // Optional: Print progress every 100 iterations
         if (verbose && iterations % 1000 == 0) {
