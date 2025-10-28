@@ -55,8 +55,6 @@ int main(int argc, char* argv[]) {
     for (int r = 0; r < rank; ++r) {
         N_previous += (r < N % size) ? (N / size + 1) : (N / size);
     }
-    const double start_local = start + N_previous * h;
-    const double end_local = start_local + (N_local - 1) * h;
 
     // Initialize the local grid and new grid
     std::vector<double> u(N_local * N, 0.0);
@@ -65,7 +63,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < N_local; ++i) {
         for (int j = 0; j < N; ++j) {
             double x = start + j * h;
-            double y = start_local + i * h;
+            double y = start + (N_previous + i) * h;
             f_values[i * N + j] = f(x, y);
         }
     }
