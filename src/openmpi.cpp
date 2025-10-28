@@ -135,9 +135,9 @@ int main(int argc, char* argv[]) {
                 if ((i == 0 && rank == 0) || (i == N_local - 1 && rank == size - 1)) {
                     continue; // Skip global boundary points
                 }
-                double y_partial = ((i == 0) ? recv_previous_i[j] : u[(i - 1) * N + j]) - 2 * u[i * N + j] +
-                                   ((i == N_local - 1) ? recv_next_i[j] : u[(i + 1) * N + j]) / (h * h);
-                double x_partial = u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)] / (h * h);
+                double y_partial = (((i == 0) ? recv_previous_i[j] : u[(i - 1) * N + j]) - 2 * u[i * N + j] +
+                                   ((i == N_local - 1) ? recv_next_i[j] : u[(i + 1) * N + j])) / (h * h);
+                double x_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
                 double gradient = x_partial + y_partial;
                 double residual = std::abs(gradient - f_values[i * N + j]);
                 local_max_residual = std::max(local_max_residual, residual);
