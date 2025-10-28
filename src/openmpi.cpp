@@ -111,23 +111,6 @@ int main(int argc, char* argv[]) {
 
         MPI_Waitall(req_count, requests, MPI_STATUSES_IGNORE);
 
-        // Update internal grid points
-        for (int i = 0; i < N_local; ++i) {
-            for (int j = 1; j < N - 1; ++j) {
-                if ((i == 0 && rank == 0) || (i == N_local - 1 && rank == size - 1)) {
-                    continue; // Skip global boundary points
-                }
-                double f_term = f_values[i * N + j] * h * h * -1;
-                double top = (i == 0) ? recv_previous_i[j] : u[(i - 1) * N + j];
-                double bottom = (i == N_local - 1) ? recv_next_i[j] : u[(i + 1) * N + j];
-                double neighbor_term = top + bottom + u[i * N + (j - 1)] + u[i * N + (j + 1)];
-                u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
-            }
-        }
-
-        // Swap grids
-        std::swap(u, u_new);
-
         // Compute local residual
         double local_max_residual = 0.0;
         for (int i = 0; i < N_local; ++i) {
@@ -148,18 +131,33 @@ int main(int argc, char* argv[]) {
         double global_max_residual = 0.0;
         MPI_Allreduce(&local_max_residual, &global_max_residual, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-        // Update metrics
-        ++iterations;
+        // Optional verbose output
+        if (verbose && rank == 0 && iterations % 100 == 0) {
+            std::cout << "Iteration " << iterations << ", Max Residual: " << global_max_residual << std::endl;
+        }
 
         // Check for convergence
         if (global_max_residual < tolerance) {
             break;
         }
 
-        // Optional verbose output
-        if (verbose && rank == 0 && iterations % 100 == 0) {
-            std::cout << "Iteration " << iterations << ", Max Residual: " << global_max_residual << std::endl;
+        // Update internal grid points
+        for (int i = 0; i < N_local; ++i) {
+            for (int j = 1; j < N - 1; ++j) {
+                if ((i == 0 && rank == 0) || (i == N_local - 1 && rank == size - 1)) {
+                    continue; // Skip global boundary points
+                }
+                double f_term = f_values[i * N + j] * h * h * -1;
+                double top = (i == 0) ? recv_previous_i[j] : u[(i - 1) * N + j];
+                double bottom = (i == N_local - 1) ? recv_next_i[j] : u[(i + 1) * N + j];
+                double neighbor_term = top + bottom + u[i * N + (j - 1)] + u[i * N + (j + 1)];
+                u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
+            }
         }
+
+        // Swap grids and increment iteration count
+        std::swap(u, u_new);
+        ++iterations;
     }
 
     // End timing

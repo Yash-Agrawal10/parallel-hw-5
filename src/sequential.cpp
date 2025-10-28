@@ -54,18 +54,6 @@ int main(int argc, char* argv[]) {
     // Jacobi iteration
     int iterations = 0;
     while (true) {
-        // Update internal grid points
-        for (int i = 1; i < N - 1; ++i) {
-            for (int j = 1; j < N - 1; ++j) {
-                double f_term = f_values[i * N + j] * h * h * -1;
-                double neighbor_term = u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
-                u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
-            }
-        }
-
-        // Swap grids
-        std::swap(u, u_new);
-
         // Compute residual
         double max_residual = 0.0;
         for (int i = 1; i < N - 1; ++i) {
@@ -78,18 +66,28 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Update metrics
-        ++iterations;
+        // Optional verbose output
+        if (verbose && iterations % 1000 == 0) {
+            std::cout << "Iteration " << iterations << ", Max Residual: " << max_residual << std::endl;
+        }
 
         // Check for convergence
         if (max_residual < tolerance) {
             break;
         } 
 
-        // Optional verbose output
-        if (verbose && iterations % 1000 == 0) {
-            std::cout << "Iteration " << iterations << ", Max Residual: " << max_residual << std::endl;
+        // Update internal grid points
+        for (int i = 1; i < N - 1; ++i) {
+            for (int j = 1; j < N - 1; ++j) {
+                double f_term = f_values[i * N + j] * h * h * -1;
+                double neighbor_term = u[(i - 1) * N + j] + u[(i + 1) * N + j] + u[i * N + (j - 1)] + u[i * N + (j + 1)];
+                u_new[i * N + j] = 0.25 * (neighbor_term + f_term);
+            }
         }
+
+        // Swap grids and increment iteration count
+        std::swap(u, u_new);
+        ++iterations;
     }
 
     // End timing
