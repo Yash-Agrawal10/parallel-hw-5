@@ -7,4 +7,6 @@
 #SBATCH --cpus-per-task=8
 #SBATCH -t 00:10:00
 
-srun ./bin/openmp --verbose
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+echo "Running: ./bin/openmp $@"
+srun ./bin/openmp "$@"

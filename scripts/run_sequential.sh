@@ -6,4 +6,5 @@
 #SBATCH -n 1
 #SBATCH -t 00:10:00
 
-srun ./bin/sequential --verbose
+echo "Running: ./bin/sequential $@"
+srun ./bin/sequential "$@"

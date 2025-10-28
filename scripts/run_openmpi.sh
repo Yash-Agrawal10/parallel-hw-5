@@ -6,4 +6,5 @@
 #SBATCH -n 8
 #SBATCH -t 00:10:00
 
-srun ./bin/openmpi --verbose
+echo "Running: ./bin/openmpi $@"
+srun ./bin/openmpi "$@"
