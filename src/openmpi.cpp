@@ -56,9 +56,6 @@ int main(int argc, char* argv[]) {
         N_previous += (r < N % size) ? (N / size + 1) : (N / size);
     }
 
-    // Print local variables for debugging
-    std::cout << "Rank " << rank << ": N_local = " << N_local << ", N_previous = " << N_previous << std::endl;
-
     // Initialize the local grid and new grid
     std::vector<double> u(N_local * N, 0.0);
     std::vector<double> u_new(N_local * N, 0.0);
@@ -127,7 +124,7 @@ int main(int argc, char* argv[]) {
         MPI_Allreduce(&local_max_residual, &global_max_residual, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
         // Optional verbose output
-        if (verbose && rank == 0 && iterations % 100 == 0) {
+        if (verbose && rank == 0 && iterations % 1000 == 0) {
             std::cout << "Iteration " << iterations << ", Max Residual: " << global_max_residual << std::endl;
         }
 
