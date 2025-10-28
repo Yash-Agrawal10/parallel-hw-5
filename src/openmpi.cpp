@@ -20,6 +20,19 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    // Verify MPI is working
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized) {
+        std::cerr << "Error: MPI is not initialized. Please run this program with mpirun." << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        return 1;
+    } else {
+        if (rank == 0) {
+            std::cout << "MPI is initialized with " << size << " processes." << std::endl;
+        }
+    }
+
     // Parse command line arguments for verbosity and grid size
     bool verbose = false;
     int N = 256;
