@@ -84,36 +84,26 @@ int main(int argc, char* argv[]) {
     int iterations = 0;
     while (true) {
         // Do communication for boundary data
-        MPI_Request requests[4];
-        int req_count = 0;
+        int prev = (rank > 0) ? rank - 1 : MPI_PROC_NULL;
+        int next = (rank < size - 1) ? rank + 1 : MPI_PROC_NULL;
 
-        if (rank > 0) {
-            for (int j = 0; j < N; ++j) {
-                send_previous_i[j] = u[0 * N + j];
-            }
-            MPI_Isend(send_previous_i.data(), N, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+        for (int j = 0; j < N; ++j) {
+            send_previous_i[j] = u[0 * N + j];
+            send_next_i[j] = u[(N_local - 1) * N + j];
         }
 
-        if (rank < size - 1) {
-            for (int j = 0; j < N; ++j) {
-                send_next_i[j] = u[(N_local - 1) * N + j];
-            }
-            MPI_Isend(send_next_i.data(), N, MPI_DOUBLE, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
-        }
+        MPI_Request reqs[4];
+        int k = 0;
 
-        if (rank > 0) {
-            MPI_Irecv(recv_previous_i.data(), N, MPI_DOUBLE, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
-        } else {
-            std::fill_n(recv_previous_i.begin(), N, 0.0);
-        }
+        // Recvs first
+        MPI_Irecv(recv_previous_i.data(), N, MPI_DOUBLE, prev, 1, MPI_COMM_WORLD, &reqs[k++]);
+        MPI_Irecv(recv_next_i.data(), N, MPI_DOUBLE, next, 0, MPI_COMM_WORLD, &reqs[k++]);
 
-        if (rank < size - 1) {
-            MPI_Irecv(recv_next_i.data(), N, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
-        } else {
-            std::fill_n(recv_next_i.begin(), N, 0.0);
-        }
+        // Sends
+        MPI_Isend(send_previous_i.data(), N, MPI_DOUBLE, prev, 0, MPI_COMM_WORLD, &reqs[k++]);
+        MPI_Isend(send_next_i.data(), N, MPI_DOUBLE, next, 1, MPI_COMM_WORLD, &reqs[k++]);
 
-        MPI_Waitall(req_count, requests, MPI_STATUSES_IGNORE);
+        MPI_Waitall(k, reqs, MPI_STATUSES_IGNORE);
 
         // Compute local residual
         double local_max_residual = 0.0;
