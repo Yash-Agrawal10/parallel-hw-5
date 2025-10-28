@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     for (int r = 0; r < rank; ++r) {
         N_previous += (r < N % size) ? (N / size + 1) : (N / size);
     }
-    
+
     // Print local variables for debugging
     std::cout << "Rank " << rank << ": N_local = " << N_local << ", N_previous = " << N_previous << std::endl;
 
@@ -89,24 +89,28 @@ int main(int argc, char* argv[]) {
 
         if (rank > 0) {
             for (int j = 0; j < N; ++j) {
-                send_previous_i[j] = u[j];
+                send_previous_i[j] = u[0 * N + j];
             }
-            MPI_Isend(send_next_i.data(), N, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+            MPI_Isend(send_previous_i.data(), N, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
         }
 
         if (rank < size - 1) {
             for (int j = 0; j < N; ++j) {
                 send_next_i[j] = u[(N_local - 1) * N + j];
             }
-            MPI_Isend(send_previous_i.data(), N, MPI_DOUBLE, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
+            MPI_Isend(send_next_i.data(), N, MPI_DOUBLE, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
         }
 
         if (rank > 0) {
             MPI_Irecv(recv_previous_i.data(), N, MPI_DOUBLE, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
+        } else {
+            std::fill_n(recv_previous_i.begin(), N, 0.0);
         }
 
         if (rank < size - 1) {
             MPI_Irecv(recv_next_i.data(), N, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+        } else {
+            std::fill_n(recv_next_i.begin(), N, 0.0);
         }
 
         MPI_Waitall(req_count, requests, MPI_STATUSES_IGNORE);
@@ -119,7 +123,8 @@ int main(int argc, char* argv[]) {
                     continue; // Skip global boundary points
                 }
                 double y_partial = (((i == 0) ? recv_previous_i[j] : u[(i - 1) * N + j]) - 2 * u[i * N + j] +
-                                   ((i == N_local - 1) ? recv_next_i[j] : u[(i + 1) * N + j])) / (h * h);
+                                    (i == N_local - 1 ? recv_next_i[j] : u[(i + 1) * N + j])) /
+                                   (h * h);
                 double x_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
                 double gradient = x_partial + y_partial;
                 double residual = std::abs(gradient - f_values[i * N + j]);
