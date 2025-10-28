@@ -1,5 +1,5 @@
 # Compilers
-CXX      := clang++
+CXX      ?= clang++
 MPICXX   := mpicxx
 
 # Flags
