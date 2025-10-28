@@ -1,3 +1,6 @@
+# Project directories
 bin/
-.DS_Store
 output/
+
+# DS Store
+.DS_Store
