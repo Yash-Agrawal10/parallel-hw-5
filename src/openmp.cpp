@@ -84,8 +84,8 @@ int main(int argc, char* argv[]) {
 #pragma omp parallel for collapse(2) reduction(max : max_residual)
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
-                double x_partial = (u[(i - 1) * N + j] - 2 * u[i * N + j] + u[(i + 1) * N + j]) / (h * h);
-                double y_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
+                double y_partial = (u[(i - 1) * N + j] - 2 * u[i * N + j] + u[(i + 1) * N + j]) / (h * h);
+                double x_partial = (u[i * N + (j - 1)] - 2 * u[i * N + j] + u[i * N + (j + 1)]) / (h * h);
                 double gradient = x_partial + y_partial;
                 double residual = std::abs(gradient - f_values[i * N + j]);
                 max_residual = std::max(max_residual, residual);
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        // Optional: Print progress every 100 iterations
+        // Optional verbose output
         if (verbose && iterations % 1000 == 0) {
             std::cout << "Iteration " << iterations << ", Max Residual: " << max_residual << std::endl;
         }

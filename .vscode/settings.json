@@ -10,7 +10,8 @@
   ],
   "C_Cpp.default.includePath": [
     "${workspace}/**",
-    "/opt/homebrew/opt/llvm/include"
+    "/opt/homebrew/opt/llvm/include",
+    "/opt/homebrew/opt/open-mpi/include"
   ],
   "files.associations": {
     "string": "cpp",
