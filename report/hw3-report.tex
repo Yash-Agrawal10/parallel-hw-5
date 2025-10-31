@@ -10,6 +10,7 @@
 \usepackage{enumitem}
 \usepackage{parskip}
 \usepackage{booktabs}
+\usepackage{float}
 
 \pgfplotsset{compat=1.18}
 
@@ -48,20 +49,25 @@ We will consider our solution to have converged when the maximum residual in $u$
 
 I implemented three versions of the Jacobi iterative solver. One runs sequentially, one uses OpenMP to parallelize using shared memory, and one uses OpenMPI to parallelize using distributed memory. The OpenMP implementation uses 8 threads, and the OpenMPI implementation uses 8 processes. 
 
+I also precompute the values of $f(x, y)$ and store them in an array to avoid recomputing them at every iteration. All my calculations will account for this precomputation in terms of the memory accesses and FLOPs.
+
 All versions produce correct and also exactly identical results at every iteration. They converge when the max residual is less than 0.001. The performance results are summarized below, where N is the size of the array used.
 
-\begin{table}
+\begin{table}[H]
     \centering
     \begin{tabular}{lrrrr}
         \toprule
-        Version & N & Time (s) & GB/s \\
+        Version & N & Time (s) & GB/s & Iterations \\
         \midrule
-        Sequential & 256 & 14.792 & 5.834 \\
-        Sequential & 512 & 245.958 & 5.641 \\
-        OpenMP & 256 & 1.706 & 50.619 \\
-        OpenMP & 512 & 23.936 & 57.967 \\
-        OpenMPI & 256 & 2.280 & 37.877 \\
-        OpenMPI & 512 & 37.588 & 36.913 \\
+        Sequential & 256 & 14.792 & 5.834 & 54,917 \\
+        Sequential & 512 & 245.958 & 5.641 & 220,536 \\
+        Sequential & 1024 & - & - & - \\
+        OpenMP & 256 & 1.706 & 50.619 & 54,917 \\
+        OpenMP & 512 & 23.936 & 57.967 & 220,536 \\
+        OpenMP & 1024 & 372.371 & 59.734 & 883,877 \\
+        OpenMPI & 256 & 2.280 & 37.877 & 54,917 \\
+        OpenMPI & 512 & 37.588 & 36.913 & 220,536 \\
+        OpenMPI & 1024 & 573.528 & 38.784 & 883,877 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -70,22 +76,34 @@ We can clearly observe that both of parallelism provided massive performance boo
 
 \section*{Roofline Model}
 
-\subsection*{Memory Calculations}
+\subsection*{FLOPs}
 
-To generate a roofline model, we first need to calculate the memory usage for our separate operations. 
+To generate a roofline model, we first need to calculate the number of floating point operations (FLOPs) for our separate operations.
+
+For the loop in which we update our solution, we have the following operations for each grid point:
+\begin{itemize}
+    \item 4 additions to sum the neighboring u values
+    \item 1 multiplication to compute $8\pi^2 h^2$
+    \item 2 multiplications to compute $\sin(2\pi x)$ and $\cos(2\pi y)$
+    \item 1 multiplication to multiply $8\pi^2 h^2$ with $\sin(2\pi x) \cos(2\pi y)$
+    \item 1 addition to add the result to the sum of neighboring u values
+    \item 1 division to divide by 4
+\end{itemize}
+
+\subsection*{Memory Accesses}
+
+We also need to calculate the memory usage for our separate operations. 
 
 We use double precision floating point numbers for all calculations, which are each 8 bytes. Let the size of the matrix be $N \times N$.
 
-For the loop in which we update our solution, we must read the u matrix and write the new u matrix. This means the number of bytes we access for updating out matrix is
+For the loop in which we update our solution, we must read the u matrix, write the new u matrix, and read the f values matrix. This means the number of bytes we access for updating out matrix is
 \[
-    2 * 8 * N^2 = 16N^2
+    2 * 8 * N^2 + 8 * N^2 = 24N^2
 \]
 
-For the loop in which we calculate our max residual or convergence error, we must read the u matrix. This gives the number of bytes accessed as
+For the loop in which we calculate our max residual or convergence error, we must read the u matrix and the f values matrix. This gives the number of bytes accessed as
 \[
-    8 * N^2 = 8N^2
+    8 * N^2 + 8 * N^2 = 16N^2
 \]
-
-Note we are ignoring memory accesses from precomputing values of f since this is not strictly required, however including them may bring out observed results closer to the theoretical roofline.
 
 \end{document}
