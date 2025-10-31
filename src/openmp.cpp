@@ -108,9 +108,18 @@ int main(int argc, char* argv[]) {
     auto end_time = Clock::now();
     std::chrono::duration<double> elapsed = end_time - start_time;
 
+    // Compute bandwidth in GB/s
+    // Computing residual -- reads entire u grid once
+    // Updating grid -- reads entire u grid once and writes entire u_new grid once
+    double residual_bytes = N * N * sizeof(double);
+    double update_bytes = N * N * sizeof(double) * 2;
+    double bytes = (residual_bytes + update_bytes) * iterations;
+    double bandwidth = bytes / (elapsed.count() * 1e9);
+
     // Output results
     std::cout << "Iterations: " << iterations << std::endl;
     std::cout << "Elapsed time: " << elapsed.count() << " seconds" << std::endl;
+    std::cout << "Bandwidth: " << bandwidth << " GB/s" << std::endl;
 
     return 0;
 }
