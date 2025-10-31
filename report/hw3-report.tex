@@ -9,6 +9,7 @@
 \usepackage{pgfplots}
 \usepackage{enumitem}
 \usepackage{parskip}
+\usepackage{booktabs}
 
 \pgfplotsset{compat=1.18}
 
@@ -42,5 +43,49 @@ Solving for $u[i, j]$, we have
 We can use this equation to iteratively solve for $u$ with the given $f(x, y)$ using the Jacobi method. 
 
 We will consider our solution to have converged when the maximum residual in $u$ across all grid points is less than a specified tolerance $\epsilon$.
+
+\section*{Results}
+
+I implemented three versions of the Jacobi iterative solver. One runs sequentially, one uses OpenMP to parallelize using shared memory, and one uses OpenMPI to parallelize using distributed memory. The OpenMP implementation uses 8 threads, and the OpenMPI implementation uses 8 processes. 
+
+All versions produce correct and also exactly identical results at every iteration. They converge when the max residual is less than 0.001. The performance results are summarized below, where N is the size of the array used.
+
+\begin{table}
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        Version & N & Time (s) & GB/s \\
+        \midrule
+        Sequential & 256 & 14.792 & 5.834 \\
+        Sequential & 512 & 245.958 & 5.641 \\
+        OpenMP & 256 & 1.706 & 50.619 \\
+        OpenMP & 512 & 23.936 & 57.967 \\
+        OpenMPI & 256 & 2.280 & 37.877 \\
+        OpenMPI & 512 & 37.588 & 36.913 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+We can clearly observe that both of parallelism provided massive performance boosts. The OpenMP version performed better than the OpenMPI version by a significant margin. 
+
+\section*{Roofline Model}
+
+\subsection*{Memory Calculations}
+
+To generate a roofline model, we first need to calculate the memory usage for our separate operations. 
+
+We use double precision floating point numbers for all calculations, which are each 8 bytes. Let the size of the matrix be $N \times N$.
+
+For the loop in which we update our solution, we must read the u matrix and write the new u matrix. This means the number of bytes we access for updating out matrix is
+\[
+    2 * 8 * N^2 = 16N^2
+\]
+
+For the loop in which we calculate our max residual or convergence error, we must read the u matrix. This gives the number of bytes accessed as
+\[
+    8 * N^2 = 8N^2
+\]
+
+Note we are ignoring memory accesses from precomputing values of f since this is not strictly required, however including them may bring out observed results closer to the theoretical roofline.
 
 \end{document}
