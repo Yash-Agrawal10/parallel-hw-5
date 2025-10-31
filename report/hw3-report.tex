@@ -118,4 +118,65 @@ For the loop in which we calculate our max residual or convergence error, we mus
     8 * N^2 + 8 * N^2 = 16N^2
 \]
 
+\subsection*{Arithmetic Intensity}
+
+Using the FLOPs and memory access calculations above, we can calculate the arithmetic intensity for both operations.
+
+We assume hardware that has a peak memory bandwidth of 160 GB/s and a peak performance of 1000 GFLOPs/s (1 TFLOP/s).
+
+For the update operation, the arithmetic intensity is
+\[
+    \frac{6N^2 \text{ FLOPs}}{24N^2 \text{ Bytes}} = \frac{1}{4} \text{ FLOPs/Byte}
+\]
+
+For the residual calculation operation, the arithmetic intensity is
+\[
+    \frac{6N^2 \text{ FLOPs}}{16N^2 \text{ Bytes}} = \frac{3}{8} \text{ FLOPs/Byte}
+\]
+
+\subsection*{Roofline Plot}
+
+Using the arithmetic intensities calculated above, we can plot the roofline model. The update loop has an AI of 0.25 FLOPs/byte, and the residual loop has an AI of 0.375 FLOPs/byte.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            title={Roofline Model for Jacobi Solver}
+            xlabel={Arithmetic Intensity (FLOPs/Byte)},
+            ylabel={Performance (GFLOPs/s)},
+            xmode=log,
+            ymode=log,
+            xmin=0.1, xmax=100,
+            ymin=1, ymax=2000,
+            grid=major,
+            major grid style={line width=.2pt,draw=gray!50},
+            width=0.8\linewidth,
+            height=0.6\linewidth,
+        ]
+
+        % Parameters
+        \def\bandwidth{160} % Memory bandwidth in GB/s
+        \def\compute{1000}  % Peak performance in GFLOPs/s
+        \def\cpuai{\compute/\bandwidth} % CPU arithmetic intensity
+
+        % Memory bound line
+        \addplot [thick, domain=0.1:{\cpuai}] {\bandwidth * x}
+            node[pos=0.5, above, sloped] {Memory bound};
+
+        % Compute bound line
+        \addplot [thick, domain={\cpuai}:100] {\compute}
+            node[pos=0.5, above] {Compute bound};
+
+        % Operation points
+        \addplot[densely dashed] coordinates {(0.25,1) (0.25,2000)}
+            node[pos=0.25, sloped, above] {AI of update loop};
+
+        \addplot[densely dashed] coordinates {(0.375,1) (0.375,2000)}
+            node[pos=0.25, sloped, below] {AI of residual loop};
+
+        \end{axis}
+    \end{tikzpicture}
+\end{figure}
+
 \end{document}
