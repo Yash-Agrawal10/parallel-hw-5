@@ -43,7 +43,7 @@ Solving for $u[i, j]$, we have
 
 We can use this equation to iteratively solve for $u$ with the given $f(x, y)$ using the Jacobi method. 
 
-We will consider our solution to have converged when the maximum residual in $u$ across all grid points is less than a specified tolerance $\epsilon$.
+We will consider our solution to have converged when the maximum residual in $u$ across all grid points is less than a specified tolerance $\epsilon$. I chose $\epsilon = 0.001$ for this assignment.
 
 \section*{Results}
 
@@ -80,15 +80,27 @@ We can clearly observe that both of parallelism provided massive performance boo
 
 To generate a roofline model, we first need to calculate the number of floating point operations (FLOPs) for our separate operations.
 
+The FLOPs calculation depends on precomputing the values of $f(x, y)$ and storing them in an array.
+
 For the loop in which we update our solution, we have the following operations for each grid point:
 \begin{itemize}
-    \item 4 additions to sum the neighboring u values
-    \item 1 multiplication to compute $8\pi^2 h^2$
-    \item 2 multiplications to compute $\sin(2\pi x)$ and $\cos(2\pi y)$
-    \item 1 multiplication to multiply $8\pi^2 h^2$ with $\sin(2\pi x) \cos(2\pi y)$
-    \item 1 addition to add the result to the sum of neighboring u values
-    \item 1 division to divide by 4
+    \item Scaling $f(x, y)$ by some constant: 1 FLOP
+    \item Summing the four neighboring $u$ values: 3 FLOPs
+    \item Adding the scaled $f(x, y)$ value to the sum of neighbors: 1 FLOP
+    \item Dividing the total by 4: 1 FLOP
 \end{itemize}
+
+This gives a total of 6 FLOPs per grid point for updating our solution. Thus, the total number of FLOPs for updating our solution is \(6N^2\).
+
+For the loop in which we calculate our max residual or convergence error, we have the following operations for each grid point:
+\begin{itemize}
+    \item Scale the current $u$ value by -4: 1 FLOP
+    \item Sum the four neighboring $u$ values: 3 FLOPs
+    \item Scale the resulting sum by \(1/h^2\): 1 FLOP
+    \item Substract the result from the precomputed $f(x, y)$ value: 1 FLOP
+\end{itemize}
+
+While there are other operations, they are not floating point operations, so we do not count them here. This gives a total of 6 FLOPs per grid point for calculating the residual. Thus, the total number of FLOPs for calculating the residual is also \(6N^2\).
 
 \subsection*{Memory Accesses}
 
