@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     // Updating grid -- reads entire u grid once and writes entire u_new grid once
     double residual_bytes = N * N * sizeof(double);
     double update_bytes = N * N * sizeof(double) * 2;
-    double bytes = residual_bytes + update_bytes;
+    double bytes = (residual_bytes + update_bytes) * iterations;
     double bandwidth = bytes / (elapsed.count() * 1e9);
 
     // Output results
